@@ -7,35 +7,47 @@ import {
 } from "@angular/common/http/testing";
 import { COURSES } from "../../../../server/db-data";
 
-describe("CalculatorService", () => {
-  let coursesService: CoursesService,
-    httpTestingController: HttpTestingController;
+describe('CoursesService', () => {
+  let coursesService: CoursesService;
+  let httpTestingController: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [CoursesService],
     });
+
+    coursesService = TestBed.get(CoursesService);
+    httpTestingController = TestBed.get(HttpTestingController);
   });
 
-  coursesService = TestBed.get(CoursesService);
-  httpTestingController = TestBed.get(HttpTestingController);
+  it("should retrieve all courses", () => {
+    // You need to move your testing logic inside the test function
+    coursesService.findAllCourses().subscribe((courses) => {
+      expect(courses).toBeTruthy("No courses returned");
+      expect(courses.length).toBe(12, "incorrect number of courses");
+      const course = courses.find((course) => course.id == 12);
+      expect(course.titles.description).toBe("Angular Testing Course");
+    });
 
-  it("should retrieve all courses"), () => {};
-  // has to susbscribe or nothing will happen
-  //find all courrsese first step is to check the name then "parameters"
-  coursesService.findAllCourses().subscribe((courses) => {
-    expect(courses).toBeTruthy("No courses returned");
-    expect(courses.length).toBe(12, "incorrect number of courses");
-    const course = courses.find((course) => course.id == 12);
+    const req = httpTestingController.expectOne("/api/courses");
+    expect(req.request.method).toEqual("GET");
+    req.flush({ payload: Object.values(COURSES) });
 
-    expect(course.titles.description).toBe("Angular Testing Course");
+    // You need to call httpTestingController.verify() to ensure no outstanding requests
+    httpTestingController.verify();
   });
 
-  const req = httpTestingController.expectOne("/api/courses");
+  it('should find a course by id', () => {
+    coursesService.findCourseById(12).subscribe((course) => {
+      expect(course).toBeTruthy();
+      expect(course.id).toBe(12);
+    });
 
-  expect(req.request.method).toEqual("GET");
+    const req = httpTestingController.expectOne("/api/courses/12");
+    expect(req.request.method).toEqual("GET");
+    req.flush(COURSES[12]);
 
-  req.flush({ 
-    payload: Object.values(COURSES) });
+    httpTestingController.verify();
+  });
 });
